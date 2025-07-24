@@ -8,4 +8,8 @@ add_executable(PagingSimulator
         des/Event.cpp
         des/EventQueue.cpp
         core/PagingAlgorithm.h
-        core/CoreStructs.h)
+        core/CoreStructs.h
+        core/MemoryAccessEvent.cpp
+        core/MemoryAccessEvent.h
+        Simulation.cpp
+        Simulation.h)

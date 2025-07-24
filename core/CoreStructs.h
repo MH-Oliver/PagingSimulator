@@ -6,38 +6,85 @@
  */
 struct PageFrame{
     int pageId;
-    bool dirtyBit;      // Wurde Rahmen verändert?
-    bool referencedBit; // Kürzlicher Zugriff?
+    bool dirtyBit;      // Wurde Rahmen verändert
+    bool referencedBit; // Kürzlicher Zugriff
+    long long lastAccessTime;
+    long long loadTime;
+    int accessCounter;
 };
 
 struct PageTableEntry {
-    bool isPresent;   // Ist die Seite im Hauptspeicher?
-    int frameIndex;   // Welcher physischer Rahmen enthält die Seite (-1, wenn nicht präsent)
+    bool isPresent;
+    int frameIndex; // Index des Rahmens zu der aktuellen Seite
 };
 
 struct PageTable {
     std::vector<PageTableEntry> entries;
+
+    PageTable(unsigned int numVirtualPages) {
+        entries.resize(numVirtualPages);
+        for (PageTableEntry& entry : entries) {
+            entry.isPresent = false;
+            entry.frameIndex = -1;
+        }
+    }
 };
 
 struct TLBEntry {
     unsigned int page_index;
     unsigned int page_frame_index;
     unsigned char frame_attributes;
+    // Hier könnten auch Attribute für die Paging-Algorithmen gespeichert werden
 };
 
 struct TLB {
     std::vector<TLBEntry> entries;
-    unsigned int size;
+    unsigned int capacity; // Maximale Anzahl von Einträgen in der TLB
+
+    TLB(unsigned int cap) : capacity(cap) {
+        entries.reserve(cap);
+    }
+
+    void clear() {
+        entries.clear();
+    }
+
+    /**
+     * Zum Prüfen, ob eine Seite bereits einem Rahmen zugeordnet ist.
+     * @param pageIndex Seite für die der zugehörige Rahmen gesucht wird.
+     * @return Falls die Seite gefunden wurde, wird der entsprechende Rahmen zurückgegeben. Sonst -1.
+     */
+    int lookup(int pageIndex) {
+        for (TLBEntry& entry : entries) {
+            if (entry.page_index == pageIndex) {
+                return entry.page_frame_index;
+            }
+        }
+    }
+
+    void addEntry(int pageIndex, int frameIndex) {
+        entries.push_back(TLBEntry(pageIndex,frameIndex));
+    }
 };
 
 struct Process {
     unsigned char process_id;
-    PageTable *page_table;
+    PageTable page_table;
+
+    Process(unsigned char id, unsigned int numVirtualPages)
+        : process_id(id), page_table(numVirtualPages) {}
 };
 
 struct MMU {
-    std::unique_ptr<TLB> tlb;
-    std::unique_ptr<Process> process;
+    TLB tlb;
+    Process* current_process;
+
+    MMU(unsigned int tlbCapacity) : tlb(tlbCapacity), current_process(nullptr) {}
+
+    void setCurrentProcess(Process* p) {
+        current_process = p;
+        tlb.clear();
+    }
 };
 
 #endif //CORESTRUCTS_H
