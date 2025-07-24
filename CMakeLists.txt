@@ -3,4 +3,8 @@ project(PagingSimulator)
 
 set(CMAKE_CXX_STANDARD 20)
 
-add_executable(PagingSimulator main.cpp)
+add_executable(PagingSimulator
+        main.cpp
+        des/Event.cpp
+        des/EventQueue.cpp
+        pagingAlgorithms/PagingAlgorithm.h)
