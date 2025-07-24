@@ -7,4 +7,5 @@ add_executable(PagingSimulator
         main.cpp
         des/Event.cpp
         des/EventQueue.cpp
-        pagingAlgorithms/PagingAlgorithm.h)
+        core/PagingAlgorithm.h
+        core/CoreStructs.h)
