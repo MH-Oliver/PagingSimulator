@@ -18,7 +18,7 @@ void Simulation::handleMemoryAccess(MemoryAccessEvent* event) {
     if (frameIndex != -1) { // TLB HIT: Frame wurde gefunden.
         cout << "  -> TLB Hit! Seite " << requestedPageId << " gefunden in Rahmen " << frameIndex << endl;
         mainMemory[frameIndex].referencedBit = true;
-        //TODO pagingAlgorithm->memoryAccess(requestedPageId);
+        pagingAlgorithm->memoryAccess(requestedPageId);
     } else { // TLB Miss
         cout << "  -> TLB Miss für Seite " << requestedPageId << endl;
 
@@ -36,7 +36,7 @@ void Simulation::handleMemoryAccess(MemoryAccessEvent* event) {
             frameIndex = pte->frameIndex;
 
             mainMemory[frameIndex].referencedBit = true;
-            //TODO pagingAlgorithm->memoryAccess(requestedPageId);
+            pagingAlgorithm->memoryAccess(requestedPageId);
             mmu.tlb.addEntry(requestedPageId, frameIndex);
 
         } else { // Page Fault (Seite nicht im physischem Speicher)

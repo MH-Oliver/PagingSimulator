@@ -14,4 +14,5 @@ add_executable(PagingSimulator
         src/Simulation.cpp
         src/Simulation.h
         test/HandleMemoryAccessTest.h
-        test/DesTest.h)
+        test/DesTest.h
+        src/core/DummyPagingAlgorithm.h)

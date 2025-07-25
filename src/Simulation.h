@@ -34,8 +34,6 @@ public:
      * Bei einem Page Hit wird das referencedBit des entsprechenden Seiten-Rahmen auf true gesetzt.
      *
      * @param event Beinhaltet den Index der gesuchten Seite
-     *
-     * TODO Es sollte noch in der Main ein Test hierfür geschrieben werden
      */
     void handleMemoryAccess(MemoryAccessEvent* event);
 
@@ -45,7 +43,7 @@ public:
 
     void handlePageFault(int requested_page_id);
 
-    // TODO Methode bei implementiertem PageFault zu löschen
+private:
     void addTlbEntry(int get_page_id, int frame_index) {
         mainMemory[frame_index].referencedBit = true;
         mmu.tlb.addEntry(get_page_id, frame_index);
