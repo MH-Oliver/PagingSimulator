@@ -3,14 +3,14 @@
 #include <iostream>
 
 
-void Simulation::handleMemoryAccess(MemoryAccessEvent event) {
-    if (!currentProcess) {
+void Simulation::handleMemoryAccess(MemoryAccessEvent* event) {
+    if (!mmu.currentProcess) {
         cout << "Kein Process aktiv";
         return;
     }
 
-    int requestedPageId = event.getPageId();
-    cout << "Prozess " << (int)currentProcess->process_id << " Zugriff auf Seite: " << requestedPageId << endl;
+    int requestedPageId = event->getPageId();
+    cout << "Prozess " << (int)mmu.currentProcess->process_id << " Zugriff auf Seite: " << requestedPageId << endl;
 
     // 1. TLB prüfen (über die MMU)
     int frameIndex = mmu.tlb.lookup(requestedPageId);
@@ -23,12 +23,12 @@ void Simulation::handleMemoryAccess(MemoryAccessEvent event) {
         cout << "  -> TLB Miss für Seite " << requestedPageId << endl;
 
         // 2. Seitentabelle des aktuellen Prozesses prüfen (über die MMU)
-        if (currentProcess->page_table.entries.size() <= requestedPageId) {
+        if (mmu.currentProcess->page_table.entries.size() <= requestedPageId) {
             cerr << "Ungültiges Event";
             return;
         }
         // Sichergestellt: Seite existiert virtuell
-        PageTableEntry* pte = &currentProcess->page_table.entries[requestedPageId];
+        PageTableEntry* pte = &mmu.currentProcess->page_table.entries[requestedPageId];
 
         // Es muss nun geprüft werden, ob Seite auch im physischem Speicher
         if (pte->isPresent) { // Page Hit (nach TLB Miss)

@@ -1,5 +1,6 @@
 #ifndef CORESTRUCTS_H
 #define CORESTRUCTS_H
+#include <stdexcept>
 
 /**
  * Repräsentiert einen einzelnen Rahmen im physischem Speicher
@@ -55,14 +56,16 @@ struct TLB {
      * @return Falls die Seite gefunden wurde, wird der entsprechende Rahmen zurückgegeben. Sonst -1.
      */
     int lookup(int pageIndex) {
-        for (TLBEntry& entry : entries) {
+        for (const TLBEntry& entry : entries) {
             if (entry.page_index == pageIndex) {
                 return entry.page_frame_index;
             }
         }
+        return -1;
     }
 
     void addEntry(int pageIndex, int frameIndex) {
+        //if (entries.size()+1 > capacity) throw std::length_error("TLB hat keine Kapazitaet mehr");
         entries.push_back(TLBEntry(pageIndex,frameIndex));
     }
 };
@@ -77,12 +80,12 @@ struct Process {
 
 struct MMU {
     TLB tlb;
-    Process* current_process;
+    Process* currentProcess;
 
-    MMU(unsigned int tlbCapacity) : tlb(tlbCapacity), current_process(nullptr) {}
+    MMU(unsigned int tlbCapacity) : tlb(tlbCapacity), currentProcess(nullptr) {}
 
     void setCurrentProcess(Process* p) {
-        current_process = p;
+        currentProcess = p;
         tlb.clear();
     }
 };

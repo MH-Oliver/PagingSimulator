@@ -9,30 +9,47 @@
 using namespace std;
 
 class Simulation {
-public:
+private:
     vector<PageFrame> mainMemory;
     vector<Process> processes;
     PagingAlgorithm* pagingAlgorithm;
-    MMU mmu;
+    MMU mmu; // Aktuelle Prozess hier verwaltet
 
-    Process* currentProcess; // Aktuell ausgeführter Process
+public:
 
-    void handlePageFault(int requested_page_id);
+    Simulation(int numFrames, PagingAlgorithm* pagingAlgorithm, int tlbCapacity)
+        : pagingAlgorithm(pagingAlgorithm), mmu(tlbCapacity) {
+        mainMemory.resize(numFrames);
+        for (PageFrame frame : mainMemory) {
+            frame.pageId = -1; // Frame am Anfang leer
+            frame.referencedBit = false;
+            frame.dirtyBit = false;
+        }
+    }
 
     /**
-     * Wird aufgerufen, um eine Seite des laufenden Processes aus dem Hauptspeicher abzurufen,
-     * bzw. um zu prüfen, ob der Prozess überhaupt im physischem Speicher vorliegt.
+     * Innerhalb dieser Methode wird der Hauptspeicher durchsucht und es wird
+     * zwischen einem Page Hit und einem Page Fault unterschieden.
      *
-     * - Lässt sich der Seite über das TLB ein Rahmen zuordnen, kann dieser sofort abgerufen werden (TLB Hit).
-     *   Falls nicht, wird die Seitentabelle des aktuellen Prozesses geprüft.
-     *     - Liegt hierbei ein Verweis auf den entsprechenden Rahhmen vor, wird auf diesen zugeriffen.
-     *     - Falls nicht, wird ein Page-Fault behandelt-
+     * Bei einem Page Hit wird das referencedBit des entsprechenden Seiten-Rahmen auf true gesetzt.
      *
      * @param event Beinhaltet den Index der gesuchten Seite
      *
      * TODO Es sollte noch in der Main ein Test hierfür geschrieben werden
      */
-    void handleMemoryAccess(MemoryAccessEvent event);
+    void handleMemoryAccess(MemoryAccessEvent* event);
+
+    void setCurrentProcess(Process* process) {
+        mmu.setCurrentProcess(process);
+    }
+
+    void handlePageFault(int requested_page_id);
+
+    // TODO Methode bei implementiertem PageFault zu löschen
+    void addTlbEntry(int get_page_id, int frame_index) {
+        mainMemory[frame_index].referencedBit = true;
+        mmu.tlb.addEntry(get_page_id, frame_index);
+    }
 };
 
 #endif //SIMULATION_H
