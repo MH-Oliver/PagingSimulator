@@ -46,7 +46,36 @@ void Simulation::handleMemoryAccess(MemoryAccessEvent* event) {
     }
 }
 
+/**
+ * Bestimmung einer alten Seite, um die neue Seite in den physichen Speicher zu laden, und die alte zu entfernen.
+ * @param requested_page_id Seite die in den physichen Speicher geladen werden soll.
+ */
 void Simulation::handlePageFault(int requested_page_id) {
-    // TODO
+    // Suche, ob noch freier Platz im Speicher
+    int victimFrameIndex = -1;
+    for(int i = 0; i < mainMemory.size(); ++i) {
+        if (mainMemory[i].pageId == -1) {
+            victimFrameIndex = i;
+            break;
+        }
+    }
+    if (victimFrameIndex == -1) {
+        // Zu überschreibenden Frame finden
+        victimFrameIndex = pagingAlgorithm->selectVictimPage();
+        cout << "  [Simulation] Paging-Algorithmus wählte Frame " << victimFrameIndex << " als Opfer." << endl;
+    }
+
+    // Ueberschreibe den Frame mit der neuen Seite
+    PageFrame& victimFrame = mainMemory[victimFrameIndex];
+    victimFrame.pageId = requested_page_id;
+    victimFrame.dirtyBit = false;
+    victimFrame.referencedBit = true;
+
+    addTlbEntry(requested_page_id, victimFrameIndex);
+
+    // Informiere den Algorithmus über die neue Seite
+    pagingAlgorithm->pageLoaded(requested_page_id, victimFrameIndex);
+
+
 }
 
