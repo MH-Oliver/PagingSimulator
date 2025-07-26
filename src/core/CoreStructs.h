@@ -1,7 +1,7 @@
 #ifndef CORESTRUCTS_H
 #define CORESTRUCTS_H
-#include <stdexcept>
-
+#include <iostream>
+using namespace std;
 /**
  * Repräsentiert einen einzelnen Rahmen im physischem Speicher
  */
@@ -65,8 +65,29 @@ struct TLB {
     }
 
     void addEntry(int pageIndex, int frameIndex) {
-        //if (entries.size()+1 > capacity) throw std::length_error("TLB hat keine Kapazitaet mehr");
-        entries.push_back(TLBEntry(pageIndex,frameIndex));
+        if (entries.size()+1 < capacity) {
+            entries.push_back(TLBEntry(pageIndex,frameIndex));
+        } else {
+            cout << "  TLB hat keine Kapazität mehr" << endl;
+        }
+    }
+
+    void deleteEntry(int victim_frame_index) {
+        for (int i = 0; i < entries.size(); i++) {
+            const TLBEntry& entry = entries[i];
+            if (entry.page_frame_index == victim_frame_index) {
+                entries.erase(entries.begin() + i);
+            }
+        }
+    }
+
+    int getPageForFrame(int victim_frame_index) {
+        for (const TLBEntry& entry : entries) {
+            if (entry.page_frame_index == victim_frame_index) {
+                return entry.page_index;
+            }
+        }
+        return -1;
     }
 };
 

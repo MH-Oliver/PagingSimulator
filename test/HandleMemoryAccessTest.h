@@ -31,10 +31,14 @@ public:
         MemoryAccessEvent event3(1);
         simulation.handleMemoryAccess(&event3);
 
-        std::cout << "\n--- Testfall 4: Zugriff auf dritte Seite (Page Fault, TLB überläuft, Seite 0 wird verdrängt) ---" << std::endl;
+        std::cout << "\n--- Testfall 4.1: Zugriff auf dritte Seite (Page Fault, TLB überläuft) ---" << std::endl;
         //TODO Implementierung für Fall wenn TLB voll: Für Grundfunktionalität erstmal irrelevant
         MemoryAccessEvent event4(2);
         simulation.handleMemoryAccess(&event4);
+        std::cout << "\n--- Testfall 4.2: Erneute Zugriff auf gleiche Seite. Page Hit (nach TLB Miss) ---" << std::endl;
+        simulation.handleMemoryAccess(&event4);
+        std::cout << "\n--- Testfall 4.3: Zugriff auf erste Seite. (Page Fault, TLB überläuft) ---" << std::endl;
+        simulation.handleMemoryAccess(&event1);
     }
 };
 

@@ -32,8 +32,8 @@ void Simulation::handleMemoryAccess(MemoryAccessEvent* event) {
 
         // Es muss nun geprüft werden, ob Seite auch im physischem Speicher
         if (pte->isPresent) { // Page Hit (nach TLB Miss)
-            cout << "  -> Page Hit! (nach TLB Miss) Seite " << requestedPageId << " gefunden in Rahmen " << frameIndex <<endl;
             frameIndex = pte->frameIndex;
+            cout << "  -> Page Hit! (nach TLB Miss) Seite " << requestedPageId << " gefunden in Rahmen " << frameIndex <<endl;
 
             mainMemory[frameIndex].referencedBit = true;
             pagingAlgorithm->memoryAccess(requestedPageId);
@@ -71,7 +71,16 @@ void Simulation::handlePageFault(int requested_page_id) {
     victimFrame.dirtyBit = false;
     victimFrame.referencedBit = true;
 
+
+    PageTableEntry* pte = &mmu.currentProcess->page_table.entries[requested_page_id];
+    pte->frameIndex = victimFrameIndex;
+    pte->isPresent = true;
     addTlbEntry(requested_page_id, victimFrameIndex);
+
+    int victimPageIndex = getTlbPageForFrame(victimFrameIndex);
+    PageTableEntry* oldPte = &mmu.currentProcess->page_table.entries[victimPageIndex];
+    oldPte->isPresent = false;
+    deleteTlbEntry(victimFrameIndex);
 
     // Informiere den Algorithmus über die neue Seite
     pagingAlgorithm->pageLoaded(requested_page_id, victimFrameIndex);

@@ -1,4 +1,4 @@
-#include "core/DummyPagingAlgorithm.h"
+#include "src/core/DummyPagingAlgorithm.h"
 #include "test/DesTest.h"
 #include "test/HandleMemoryAccessTest.h"
 

@@ -41,11 +41,18 @@ public:
         mmu.setCurrentProcess(process);
     }
 
+    void deleteTlbEntry(int victim_frame_index) {
+        mmu.tlb.deleteEntry(victim_frame_index);
+    }
+
+    int getTlbPageForFrame(int victim_frame_index) {
+        mmu.tlb.getPageForFrame(victim_frame_index);
+    }
+
     void handlePageFault(int requested_page_id);
 
 private:
     void addTlbEntry(int get_page_id, int frame_index) {
-        mainMemory[frame_index].referencedBit = true;
         mmu.tlb.addEntry(get_page_id, frame_index);
     }
 };
