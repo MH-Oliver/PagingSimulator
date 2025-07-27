@@ -20,7 +20,7 @@ public:
     Simulation(int numFrames, PagingAlgorithm* pagingAlgorithm, int tlbCapacity)
         : pagingAlgorithm(pagingAlgorithm), mmu(tlbCapacity) {
         mainMemory.resize(numFrames);
-        for (PageFrame frame : mainMemory) {
+        for (PageFrame& frame : mainMemory) {
             frame.pageId = -1; // Frame am Anfang leer
             frame.referencedBit = false;
             frame.dirtyBit = false;
@@ -46,7 +46,7 @@ public:
     }
 
     int getTlbPageForFrame(int victim_frame_index) {
-        mmu.tlb.getPageForFrame(victim_frame_index);
+        return mmu.tlb.getPageForFrame(victim_frame_index);
     }
 
     void handlePageFault(int requested_page_id);

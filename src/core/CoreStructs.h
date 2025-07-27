@@ -65,10 +65,10 @@ struct TLB {
     }
 
     void addEntry(int pageIndex, int frameIndex) {
-        if (entries.size()+1 < capacity) {
+        if (entries.size()+1 <= capacity) {
             entries.push_back(TLBEntry(pageIndex,frameIndex));
         } else {
-            cout << "  TLB hat keine Kapazität mehr" << endl;
+            cout << "  TLB hat keine Kapazität mehr. Es findet kein neuer Eintrag statt." << endl;
         }
     }
 

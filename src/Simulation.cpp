@@ -52,15 +52,17 @@ void Simulation::handleMemoryAccess(MemoryAccessEvent* event) {
  */
 void Simulation::handlePageFault(int requested_page_id) {
     // Suche, ob noch freier Platz im Speicher
+    bool foundFreeFrame = false;
     int victimFrameIndex = -1;
     for(int i = 0; i < mainMemory.size(); ++i) {
         if (mainMemory[i].pageId == -1) {
             victimFrameIndex = i;
+            foundFreeFrame = true;
             break;
         }
     }
-    if (victimFrameIndex == -1) {
-        // Zu überschreibenden Frame finden
+    if (!foundFreeFrame) {
+        // Zu überschreibenden Frame finden. Hier Logik des entsprechenden Algoithmus.
         victimFrameIndex = pagingAlgorithm->selectVictimPage();
         cout << "  [Simulation] Paging-Algorithmus wählte Frame " << victimFrameIndex << " als Opfer." << endl;
     }
@@ -71,16 +73,21 @@ void Simulation::handlePageFault(int requested_page_id) {
     victimFrame.dirtyBit = false;
     victimFrame.referencedBit = true;
 
+    if (!foundFreeFrame) {
+        // Alten Eintrag in der Tlb löschen
+        int victimPageIndex = getTlbPageForFrame(victimFrameIndex);
+        PageTableEntry* oldPte = &mmu.currentProcess->page_table.entries[victimPageIndex];
+        oldPte->isPresent = false;
+        deleteTlbEntry(victimFrameIndex);
+    }
 
+    // Referenz im PageTable des Prozesses auf PageFrame
     PageTableEntry* pte = &mmu.currentProcess->page_table.entries[requested_page_id];
     pte->frameIndex = victimFrameIndex;
     pte->isPresent = true;
-    addTlbEntry(requested_page_id, victimFrameIndex);
 
-    int victimPageIndex = getTlbPageForFrame(victimFrameIndex);
-    PageTableEntry* oldPte = &mmu.currentProcess->page_table.entries[victimPageIndex];
-    oldPte->isPresent = false;
-    deleteTlbEntry(victimFrameIndex);
+    // Neuen Eintrag in der Tlb ergänzen
+    addTlbEntry(requested_page_id, victimFrameIndex);
 
     // Informiere den Algorithmus über die neue Seite
     pagingAlgorithm->pageLoaded(requested_page_id, victimFrameIndex);

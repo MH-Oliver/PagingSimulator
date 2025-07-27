@@ -9,7 +9,7 @@ public:
     static void executeTests(PagingAlgorithm* pagingAlgorithm) {
         cout << "--- Test von handleMemoryAccess() ---" << endl;
 
-        const int NUM_FRAMES = 4;
+        const int NUM_FRAMES = 3;
         const int TLB_CAPACITY = 2;
         const int NUM_VIRTUAL_PAGES_PROCESS1 = 10;
 
@@ -32,7 +32,6 @@ public:
         simulation.handleMemoryAccess(&event3);
 
         std::cout << "\n--- Testfall 4.1: Zugriff auf dritte Seite (Page Fault, TLB überläuft) ---" << std::endl;
-        //TODO Implementierung für Fall wenn TLB voll: Für Grundfunktionalität erstmal irrelevant
         MemoryAccessEvent event4(2);
         simulation.handleMemoryAccess(&event4);
         std::cout << "\n--- Testfall 4.2: Erneute Zugriff auf gleiche Seite. Page Hit (nach TLB Miss) ---" << std::endl;
