@@ -15,4 +15,14 @@ add_executable(PagingSimulator
         src/Simulation.h
         test/HandleMemoryAccessTest.h
         test/DesTest.h
-        src/core/DummyPagingAlgorithm.h)
+        src/core/DummyPagingAlgorithm.h
+        src/core/Algorithms/FIFOAlgorithm.cpp
+        src/core/Algorithms/FIFOAlgorithm.h
+        src/core/Algorithms/SecondChanceAlgorithm.cpp
+        src/core/Algorithms/SecondChanceAlgorithm.h
+        src/core/Algorithms/LRUAlgorithm.cpp
+        src/core/Algorithms/LRUAlgorithm.h
+        src/core/Algorithms/NRUAlgorithm.cpp
+        src/core/Algorithms/NRUAlgorithm.h
+        src/core/Algorithms/NFUAlgorithm.cpp
+        src/core/Algorithms/NFUAlgorithm.h)

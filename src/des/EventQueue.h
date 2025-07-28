@@ -4,9 +4,8 @@
 #include <queue>
 #include "Event.h"
 
-struct CompareNode : public std::binary_function<Event*, Event*, bool> {
-    bool operator()(const Event* lhs, const Event* rhs) const
-    {
+struct CompareNode {
+    bool operator()(const Event* lhs, const Event* rhs) const {
         return lhs->getTimestamp() > rhs->getTimestamp();
     }
 };
