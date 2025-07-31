@@ -1,30 +1,17 @@
-//
-// Created by Markus Springer on 25.03.16.
-//
-
 #ifndef UE2_NEW_EVENT_H
 #define UE2_NEW_EVENT_H
 
-#include <iostream>
-#include <ctime>
+#include <functional>
 
 class Event {
 private:
-    int timestamp;
-    void (*function)();
+    double timestamp;
+    std::function<void()> callback;
 
 public:
-    Event( void (*called_function)(), int time) {
-        timestamp = time;
-        function = called_function;
-    }
-
-    int getTimestamp() const {
-        return timestamp;
-    }
-
+    Event(std::function<void()> cb, double time);
+    double getTimestamp() const;
     void processEvent();
 };
 
-
-#endif //UE2_NEW_EVENT_H
+#endif // UE2_NEW_EVENT_H

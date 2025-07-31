@@ -1,97 +1,92 @@
 #include "Simulation.h"
 
-#include <iostream>
+Simulation::Simulation(int numFrames, PagingAlgorithm* algo, int tlbCapacity)
+    : pagingAlgorithm(algo), mmu(tlbCapacity) {
+    // Hauptspeicher initialisieren: Frames leer
+    mainMemory.resize(numFrames);
+    for (auto& frame : mainMemory) {
+        frame.pageId = -1;
+        frame.referencedBit = false;
+        frame.dirtyBit = false;
+    }
+}
 
+Simulation::~Simulation() {
+    // Ressourcenfreigabe falls nötig
+}
 
 void Simulation::handleMemoryAccess(MemoryAccessEvent* event) {
-    if (!mmu.currentProcess) {
-        cout << "Kein Process aktiv";
-        return;
-    }
+    totalAccesses++;
+    double accessTime = 0.0;
+    int pageId = event->getPageId();
+    std::cout << "Prozess " << (int)mmu.currentProcess->process_id
+              << " Zugriff auf Seite: " << pageId << std::endl;
 
-    int requestedPageId = event->getPageId();
-    cout << "Prozess " << (int)mmu.currentProcess->process_id << " Zugriff auf Seite: " << requestedPageId << endl;
-
-    // 1. TLB prüfen (über die MMU)
-    int frameIndex = mmu.tlb.lookup(requestedPageId);
-
-    if (frameIndex != -1) { // TLB HIT: Frame wurde gefunden.
-        cout << "  -> TLB Hit! Seite " << requestedPageId << " gefunden in Rahmen " << frameIndex << endl;
+    // 1) TLB-Lookup
+    int frameIndex = mmu.tlb.lookup(pageId);
+    if (frameIndex != -1) {
+        // TLB-Hit
+        tlbHits++;
+        accessTime += TLB_HIT_TIME;
+        std::cout << "  -> TLB Hit: Rahmen " << frameIndex << std::endl;
         mainMemory[frameIndex].referencedBit = true;
-        pagingAlgorithm->memoryAccess(requestedPageId);
-    } else { // TLB Miss
-        cout << "  -> TLB Miss für Seite " << requestedPageId << endl;
-
-        // 2. Seitentabelle des aktuellen Prozesses prüfen (über die MMU)
-        if (mmu.currentProcess->page_table.entries.size() <= requestedPageId) {
-            cerr << "Ungültiges Event";
-            return;
-        }
-        // Sichergestellt: Seite existiert virtuell
-        PageTableEntry* pte = &mmu.currentProcess->page_table.entries[requestedPageId];
-
-        // Es muss nun geprüft werden, ob Seite auch im physischem Speicher
-        if (pte->isPresent) { // Page Hit (nach TLB Miss)
-            frameIndex = pte->frameIndex;
-            cout << "  -> Page Hit! (nach TLB Miss) Seite " << requestedPageId << " gefunden in Rahmen " << frameIndex <<endl;
-
+        pagingAlgorithm->memoryAccess(pageId);
+    } else {
+        // TLB-Miss
+        tlbMisses++;
+        accessTime += TLB_HIT_TIME;
+        std::cout << "  -> TLB Miss für Seite " << pageId << std::endl;
+        auto& entries = mmu.currentProcess->page_table.entries;
+        if (!entries[pageId].isPresent) {
+            // Page Fault
+            pageFaults++;
+            accessTime += PAGE_FAULT_TIME;
+            std::cout << "  -> Page Fault! Seite " << pageId << " nicht im Hauptspeicher." << std::endl;
+            handlePageFault(pageId);
+        } else {
+            // Page Hit
+            frameIndex = entries[pageId].frameIndex;
+            accessTime += MEMORY_ACCESS_TIME;
+            std::cout << "  -> Page Hit: Rahmen " << frameIndex << std::endl;
             mainMemory[frameIndex].referencedBit = true;
-            pagingAlgorithm->memoryAccess(requestedPageId);
-            mmu.tlb.addEntry(requestedPageId, frameIndex);
-
-        } else { // Page Fault (Seite nicht im physischem Speicher)
-            std::cout << "  -> Page Fault! Seite " << requestedPageId << " nicht im Hauptspeicher." << std::endl;
-            this->handlePageFault(requestedPageId);
+            pagingAlgorithm->memoryAccess(pageId);
+            mmu.tlb.addEntry(pageId, frameIndex);
         }
     }
+    totalAccessTime += accessTime;
 }
 
-/**
- * Bestimmung einer alten Seite, um die neue Seite in den physichen Speicher zu laden, und die alte zu entfernen.
- * @param requested_page_id Seite die in den physichen Speicher geladen werden soll.
- */
 void Simulation::handlePageFault(int requested_page_id) {
-    // Suche, ob noch freier Platz im Speicher
-    bool foundFreeFrame = false;
-    int victimFrameIndex = -1;
-    for(int i = 0; i < mainMemory.size(); ++i) {
-        if (mainMemory[i].pageId == -1) {
-            victimFrameIndex = i;
-            foundFreeFrame = true;
-            break;
-        }
+    // Freien Frame suchen
+    int victim = -1;
+    for (int i = 0; i < mainMemory.size(); ++i) {
+        if (mainMemory[i].pageId == -1) { victim = i; break; }
     }
-    if (!foundFreeFrame) {
-        // Zu überschreibenden Frame finden. Hier Logik des entsprechenden Algoithmus.
-        victimFrameIndex = pagingAlgorithm->selectVictimPage();
-        cout << "  [Simulation] Paging-Algorithmus wählte Frame " << victimFrameIndex << " als Opfer." << endl;
+    // Oder Opfer durch Algorithmus wählen
+    if (victim == -1) {
+        victim = pagingAlgorithm->selectVictimPage();
+        std::cout << "  [Simulation] Opfer-Rahmen: " << victim << std::endl;
+        int oldPage = getTlbPageForFrame(victim);
+        if (oldPage != -1) deleteTlbEntry(victim);
+        mmu.currentProcess->page_table.entries[oldPage].isPresent = false;
     }
-
-    // Ueberschreibe den Frame mit der neuen Seite
-    PageFrame& victimFrame = mainMemory[victimFrameIndex];
-    victimFrame.pageId = requested_page_id;
-    victimFrame.dirtyBit = false;
-    victimFrame.referencedBit = true;
-
-    if (!foundFreeFrame) {
-        // Alten Eintrag in der Tlb löschen
-        int victimPageIndex = getTlbPageForFrame(victimFrameIndex);
-        PageTableEntry* oldPte = &mmu.currentProcess->page_table.entries[victimPageIndex];
-        oldPte->isPresent = false;
-        deleteTlbEntry(victimFrameIndex);
-    }
-
-    // Referenz im PageTable des Prozesses auf PageFrame
-    PageTableEntry* pte = &mmu.currentProcess->page_table.entries[requested_page_id];
-    pte->frameIndex = victimFrameIndex;
-    pte->isPresent = true;
-
-    // Neuen Eintrag in der Tlb ergänzen
-    addTlbEntry(requested_page_id, victimFrameIndex);
-
-    // Informiere den Algorithmus über die neue Seite
-    pagingAlgorithm->pageLoaded(requested_page_id, victimFrameIndex);
-
-
+    // Neue Seite laden
+    auto& frame = mainMemory[victim];
+    frame.pageId = requested_page_id;
+    frame.dirtyBit = false;
+    frame.referencedBit = true;
+    auto& pte = mmu.currentProcess->page_table.entries[requested_page_id];
+    pte.frameIndex = victim;
+    pte.isPresent  = true;
+    mmu.tlb.addEntry(requested_page_id, victim);
+    pagingAlgorithm->pageLoaded(requested_page_id, victim);
 }
 
+void Simulation::printStatistics() const {
+    std::cout << "\n=== Simulationsstatistik ===\n";
+    std::cout << "Gesamte Zugriffe: " << totalAccesses << std::endl;
+    std::cout << "Page Faults: " << pageFaults << std::endl;
+    std::cout << "TLB Hits: " << tlbHits << " / Misses: " << tlbMisses << std::endl;
+    double avg = totalAccesses ? totalAccessTime / totalAccesses : 0.0;
+    std::cout << "Durchschnittliche Zugriffszeit (\u00B5s): " << avg << std::endl;
+}

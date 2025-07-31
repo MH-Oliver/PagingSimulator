@@ -1,9 +1,13 @@
-//
-// Created by Markus Springer on 25.03.16.
-//
+// ===== Modified File: src/des/Event.cpp =====
+#include "des/Event.h"
 
-#include "Event.h"
+Event::Event(std::function<void()> cb, double time)
+    : callback(std::move(cb)), timestamp(time) {}
+
+double Event::getTimestamp() const {
+    return timestamp;
+}
 
 void Event::processEvent() {
-    function();
+    callback();
 }

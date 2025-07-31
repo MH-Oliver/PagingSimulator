@@ -25,4 +25,16 @@ add_executable(PagingSimulator
         src/core/Algorithms/NRUAlgorithm.cpp
         src/core/Algorithms/NRUAlgorithm.h
         src/core/Algorithms/NFUAlgorithm.cpp
-        src/core/Algorithms/NFUAlgorithm.h)
+        src/core/Algorithms/NFUAlgorithm.h
+        src/TraceLoader.cpp
+        src/TraceLoader.h
+        src/core/Algorithms/NFUNoAgingAlgorithm.cpp
+        src/core/Algorithms/NFUNoAgingAlgorithm.h
+        test/algorithm_tests.cpp)
+
+add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
+        COMMAND ${CMAKE_COMMAND} -E copy_if_different
+        ${CMAKE_SOURCE_DIR}/resources/trace.txt
+        $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources/trace.txt
+)
