@@ -65,6 +65,15 @@ public:
      * Zeigt Gesamtzugriffe, Page Faults, TLB Hits/Misses und mittlere Zugriffszeit.
      */
     void printStatistics() const;
+
+
+    std::vector<PageFrame> getMain_memory() const {
+        return mainMemory;
+    }
+
+    MMU getMMU() const {
+        return mmu;
+    }
 };
 
 #endif // SIMULATION_H
