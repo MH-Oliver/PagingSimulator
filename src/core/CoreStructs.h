@@ -32,6 +32,7 @@ struct PageTable {
 };
 
 struct TLBEntry {
+    TLBEntry(int pageIndex, int frameIndex) : page_index(pageIndex), page_frame_index(frameIndex) {}
     unsigned int page_index;
     unsigned int page_frame_index;
     unsigned char frame_attributes;

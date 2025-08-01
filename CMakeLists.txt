@@ -29,8 +29,7 @@ add_executable(PagingSimulator
         src/TraceLoader.cpp
         src/TraceLoader.h
         src/core/Algorithms/NFUNoAgingAlgorithm.cpp
-        src/core/Algorithms/NFUNoAgingAlgorithm.h
-        test/algorithm_tests.cpp)
+        src/core/Algorithms/NFUNoAgingAlgorithm.h)
 
 add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
