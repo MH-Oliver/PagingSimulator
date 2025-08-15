@@ -23,11 +23,12 @@ docs/doxygen_warnings.log
 **/cmake-build-*/
 **/CMakeFiles/
 **/CMakeCache.txt
-**/CMakeScripts/
-**/Testing/
-**/compile_commands.json
+**/cmake_install.cmake
+**/CTestTestfile.cmake
+**/install_manifest.txt
 **/*_autogen/
-**/*.cmake
+# Common generators
+**/compile_commands.json
 
 # --- Objects / libraries / binaries (recursive) ---
 **/*.o
@@ -58,4 +59,10 @@ docs/doxygen_warnings.log
 **/*.tmp
 **/~$*
 
-# NOTE: keep app resources under version control (e.g. resources/trace.txt)
+# Keep runtime resources and configs versioned:
+# (do NOT ignore these)
+!resources/
+!Doxyfile
+!.clang-format
+!.editorconfig
+!.gitmodules
