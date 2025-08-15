@@ -1,69 +1,7 @@
-# --- JetBrains / CLion ---
-.idea/
-# !.idea/codeStyles/
-# !.idea/inspectionProfiles/
-# !.idea/runConfigurations/
-
-# .idea/shelf/        # was: /shelf/
-# .idea/workspace.xml # was: /workspace.xml
-# .idea/httpRequests/ # was: /httpRequests/
-# .idea/dataSources/  # was: /dataSources/
-# .idea/dataSources.local.xml # was: /dataSources.local.xml
-
-# --- Doxygen outputs ---
-docs/html/
-docs/latex/
-docs/doxygen_warnings.log
-
-# --- Qt / qmake generated ---
-*.pro.user
-*.user
-*.qmlc
-*.jsc
-moc_*
-ui_*
-qrc_*
-.qmake.stash
-Makefile*
-*.qrc.dep
-
-# --- CMake / build artifacts ---
-build/
-cmake-build-*/
-CMakeFiles/
-CMakeCache.txt
-CMakeScripts/
-CTestTestfile.cmake
-Testing/
-compile_commands.json
-install_manifest.txt
-*_autogen/
-*.cmake
-
-# Objects / libs / binaries
-*.o
-*.obj
-*.lo
-*.la
-*.a
-*.lib
-*.dll
-*.so
-*.dylib
-*.exe
-*.pdb
-*.ilk
-
-# --- Editors ---
-.vscode/
-*.iml
-
-# --- OS junk ---
-.DS_Store
-Thumbs.db
-desktop.ini
-
-# --- Logs / temps ---
-*.log
-*.tmp
-~$*
+# Default ignored files
+/shelf/
+/workspace.xml
+# Editor-based HTTP Client requests
+/httpRequests/
+/dataSources/
+/dataSources.local.xml
