@@ -1,36 +1,29 @@
-//
-// Created by Son on 31.07.25.
-//
-
+/**
+* @file NFUNoAgingAlgorithm.cpp
+ * @brief Implementation of NFU without aging.
+ */
 #include "core/algorithms/NFUNoAgingAlgorithm.h"
 
 void NFUNoAgingAlgorithm::memoryAccess(int pageId) {
     auto it = table.find(pageId);
-    if (it != table.end()) {
-        // Einfaches NFU ohne Aging: reiner Zähler
-        ++(it->second.counter);
-    }
+    if (it != table.end()) ++(it->second.counter);
 }
 
 int NFUNoAgingAlgorithm::selectVictimPage() {
-    unsigned int minCount = UINT_MAX;
-    int victimFrame = 0;
-    int victimPage = -1;
-    // Finde Seite mit minimalem Zähler
-    for (auto &p : table) {
-        if (p.second.counter < minCount) {
-            minCount = p.second.counter;
-            victimFrame = p.second.frameIndex;
-            victimPage = p.first;
+    if (table.empty()) throw std::logic_error("NFU(no aging): empty table");
+    unsigned int minCount = std::numeric_limits<unsigned int>::max();
+    int victimFrame = -1, victimPage = -1;
+    for (auto &kv : table) {
+        if (kv.second.counter < minCount) {
+            minCount = kv.second.counter;
+            victimFrame = kv.second.frameIndex;
+            victimPage = kv.first;
         }
     }
-    if (victimPage != -1) {
-        table.erase(victimPage);
-    }
+    if (victimPage != -1) table.erase(victimPage);
     return victimFrame;
 }
 
 void NFUNoAgingAlgorithm::pageLoaded(int pageId, int frameIndex) {
-    // Neue Seite: Zähler auf 0
     table[pageId] = Info{frameIndex, 0};
 }

@@ -1,33 +1,67 @@
-#ifndef UE2_NEW_EVENTQUEUE_H
-#define UE2_NEW_EVENTQUEUE_H
-#include <vector>
-#include <queue>
-#include "Event.h"
+/**
+ * @file EventQueue.h
+ * @brief Discrete-Event Simulation (DES) priority queue.
+ *
+ * This queue stores events ordered by their scheduled time (ascending).
+ * It owns the events; when an event is executed via step() or run(),
+ * the event object is destroyed automatically.
+ *
+ * Typical usage:
+ * @code{.cpp}
+ * EventQueue q;
+ * q.AddEvent(new Event([](){}, 1.0)); // do something at t=1.0
+ * q.AddEvent(new Event([](){}, 2.0)); // do something at t=2.0
+ * q.step(); // executes the earliest (time=1.0)
+ * q.run();  // executes the rest
+ * @endcode
+ */
 
-struct CompareNode {
-    bool operator()(const Event* lhs, const Event* rhs) const {
-        return lhs->getTimestamp() > rhs->getTimestamp();
-    }
-};
+#ifndef EVENTQUEUE_H
+#define EVENTQUEUE_H
+
+#include <memory>
+#include <queue>
+#include <vector>
+#include <cstddef>
+
+class Event; // forward declaration (정의는 .cpp에서 include)
 
 class EventQueue {
-private:
-    bool pause = false;
-    bool stopped = false;
 public:
-    std::priority_queue<Event*,std::vector<Event*>, CompareNode > eq;
-    EventQueue() {
+    EventQueue();                       // 정의는 .cpp
+    ~EventQueue();                      // 정의는 .cpp  ← 중요: 소멸자를 TU로 이동
+    EventQueue(const EventQueue&) = delete;
+    EventQueue& operator=(const EventQueue&) = delete;
+    EventQueue(EventQueue&&) noexcept;        // 정의는 .cpp
+    EventQueue& operator=(EventQueue&&) noexcept; // 정의는 .cpp
+
+    /// Add an event (takes ownership).
+    void AddEvent(Event* e);            // 정의는 .cpp
+    /// Execute all remaining events.
+    void run();                         // 정의는 .cpp
+    /// Execute the next earliest event (if any).
+    void step();                        // 정의는 .cpp
+    /// Remove all pending events without executing.
+    void clear();                       // 정의는 .cpp
+
+    bool empty() const { return pq_.empty(); }
+    std::size_t size() const { return pq_.size(); }
+
+private:
+    /// Comparator for min-heap by event time (정의는 .cpp)
+    struct Cmp {
+        bool operator()(const std::unique_ptr<Event>& a,
+                        const std::unique_ptr<Event>& b) const;
     };
 
-    void AddEvent(Event *e);
+    using Ptr = std::unique_ptr<Event>;
 
-    bool supervisorStopped();
-    bool isPaused();
-    void step();
-    void run();
-    long getSize();
-
+    // Min-heap: the smallest time on top.
+    std::priority_queue<
+        Ptr,
+        std::vector<Ptr>,
+        Cmp
+    > pq_;
 };
 
-
-#endif //UE2_NEW_EVENTQUEUE_H
+#endif // EVENTQUEUE_H

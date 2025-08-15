@@ -1,92 +1,145 @@
+/**
+ * @file Simulation.cpp
+ * @brief Implementation of the paging simulation.
+ */
+
 #include "Simulation.h"
 
-Simulation::Simulation(int numFrames, PagingAlgorithm* algo, int tlbCapacity)
-    : pagingAlgorithm(algo), mmu(tlbCapacity) {
-    // Hauptspeicher initialisieren: Frames leer
-    mainMemory.resize(numFrames);
-    for (auto& frame : mainMemory) {
-        frame.pageId = -1;
-        frame.referencedBit = false;
-        frame.dirtyBit = false;
+Simulation::Simulation(int numFrames,
+                       std::unique_ptr<PagingAlgorithm> algo,
+                       int tlbCapacity)
+    : pagingAlgorithm_(std::move(algo)), mmu_(tlbCapacity)
+{
+    // Initialize physical frames as empty.
+    mainMemory_.resize(numFrames);
+    for (auto& f : mainMemory_) {
+        f.pageId         = -1;
+        f.referencedBit  = false;
+        f.dirtyBit       = false;
+        f.lastAccessTime = 0;
+        f.loadTime       = 0;
+        f.accessCounter  = 0;
     }
 }
 
-Simulation::~Simulation() {
-    // Ressourcenfreigabe falls nötig
-}
-
-void Simulation::handleMemoryAccess(MemoryAccessEvent* event) {
-    totalAccesses++;
+void Simulation::handleMemoryAccess(const MemoryAccessEvent& event) {
+    totalAccesses_++;
     double accessTime = 0.0;
-    int pageId = event->getPageId();
-    std::cout << "Prozess " << (int)mmu.currentProcess->process_id
-              << " Zugriff auf Seite: " << pageId << std::endl;
 
-    // 1) TLB-Lookup
-    int frameIndex = mmu.tlb.lookup(pageId);
+    const int pageId = event.pageId(); // ✅ 최신 API
+
+    if (!mmu_.currentProcess) {
+        std::cerr << "[Simulation] No current process set!\n";
+        return;
+    }
+
+    // 1) TLB lookup
+    int frameIndex = mmu_.tlb.lookup(pageId);
     if (frameIndex != -1) {
-        // TLB-Hit
-        tlbHits++;
+        // TLB hit
+        tlbHits_++;
         accessTime += TLB_HIT_TIME;
-        std::cout << "  -> TLB Hit: Rahmen " << frameIndex << std::endl;
-        mainMemory[frameIndex].referencedBit = true;
-        pagingAlgorithm->memoryAccess(pageId);
+
+        auto& frame = mainMemory_[frameIndex];
+        frame.referencedBit = true;
+
+        pagingAlgorithm_->memoryAccess(pageId);
     } else {
-        // TLB-Miss
-        tlbMisses++;
+        // TLB miss
+        tlbMisses_++;
         accessTime += TLB_HIT_TIME;
-        std::cout << "  -> TLB Miss für Seite " << pageId << std::endl;
-        auto& entries = mmu.currentProcess->page_table.entries;
+
+        auto& entries = mmu_.currentProcess->page_table.entries;
         if (!entries[pageId].isPresent) {
-            // Page Fault
-            pageFaults++;
+            // Page fault path
+            pageFaults_++;
             accessTime += PAGE_FAULT_TIME;
-            std::cout << "  -> Page Fault! Seite " << pageId << " nicht im Hauptspeicher." << std::endl;
             handlePageFault(pageId);
         } else {
-            // Page Hit
+            // Page hit in main memory
             frameIndex = entries[pageId].frameIndex;
             accessTime += MEMORY_ACCESS_TIME;
-            std::cout << "  -> Page Hit: Rahmen " << frameIndex << std::endl;
-            mainMemory[frameIndex].referencedBit = true;
-            pagingAlgorithm->memoryAccess(pageId);
-            mmu.tlb.addEntry(pageId, frameIndex);
+
+            auto& frame = mainMemory_[frameIndex];
+            frame.referencedBit = true;
+
+            pagingAlgorithm_->memoryAccess(pageId);
+            mmu_.tlb.addOrUpdate(pageId, frameIndex); // ✅ 최신 API
         }
     }
-    totalAccessTime += accessTime;
+
+    totalAccessTime_ += accessTime;
 }
 
-void Simulation::handlePageFault(int requested_page_id) {
-    // Freien Frame suchen
-    int victim = -1;
-    for (int i = 0; i < mainMemory.size(); ++i) {
-        if (mainMemory[i].pageId == -1) { victim = i; break; }
+void Simulation::handlePageFault(int requestedPageId) {
+    // 1) Find a free frame (first-fit)
+    int targetFrame = -1;
+    for (int i = 0; i < static_cast<int>(mainMemory_.size()); ++i) {
+        if (mainMemory_[i].pageId == -1) { targetFrame = i; break; }
     }
-    // Oder Opfer durch Algorithmus wählen
-    if (victim == -1) {
-        victim = pagingAlgorithm->selectVictimPage();
-        std::cout << "  [Simulation] Opfer-Rahmen: " << victim << std::endl;
-        int oldPage = getTlbPageForFrame(victim);
-        if (oldPage != -1) deleteTlbEntry(victim);
-        mmu.currentProcess->page_table.entries[oldPage].isPresent = false;
+
+    // 2) If none, ask the replacement policy for a victim
+    if (targetFrame == -1) {
+        targetFrame = pagingAlgorithm_->selectVictimPage();
+
+        // Invalidate old PTE and remove TLB entry by frame index.
+        const int oldPage = mainMemory_[targetFrame].pageId; // evicted page
+        if (oldPage != -1) {
+            auto& entries = mmu_.currentProcess->page_table.entries;
+            entries[oldPage].isPresent  = false;
+            entries[oldPage].frameIndex = -1;
+            mmu_.tlb.deleteEntryByFrame(targetFrame); // ✅ 최신 API
+        }
     }
-    // Neue Seite laden
-    auto& frame = mainMemory[victim];
-    frame.pageId = requested_page_id;
-    frame.dirtyBit = false;
+
+    // 3) Map the requested page into the chosen frame
+    auto& frame = mainMemory_[targetFrame];
+    frame.pageId        = requestedPageId;
+    frame.dirtyBit      = false;
     frame.referencedBit = true;
-    auto& pte = mmu.currentProcess->page_table.entries[requested_page_id];
-    pte.frameIndex = victim;
+
+    auto& pte = mmu_.currentProcess->page_table.entries[requestedPageId];
+    pte.frameIndex = targetFrame;
     pte.isPresent  = true;
-    mmu.tlb.addEntry(requested_page_id, victim);
-    pagingAlgorithm->pageLoaded(requested_page_id, victim);
+
+    // Update TLB and notify policy
+    mmu_.tlb.addOrUpdate(requestedPageId, targetFrame); // ✅ 최신 API
+    pagingAlgorithm_->pageLoaded(requestedPageId, targetFrame);
+
+    // Count the initial access that caused the fault
+    pagingAlgorithm_->memoryAccess(requestedPageId);
 }
 
 void Simulation::printStatistics() const {
-    std::cout << "\n=== Simulationsstatistik ===\n";
-    std::cout << "Gesamte Zugriffe: " << totalAccesses << std::endl;
-    std::cout << "Page Faults: " << pageFaults << std::endl;
-    std::cout << "TLB Hits: " << tlbHits << " / Misses: " << tlbMisses << std::endl;
-    double avg = totalAccesses ? totalAccessTime / totalAccesses : 0.0;
-    std::cout << "Durchschnittliche Zugriffszeit (\u00B5s): " << avg << std::endl;
+    std::cout << "\n=== Simulation Stats ===\n";
+    std::cout << "Accesses: "    << totalAccesses_ << '\n';
+    std::cout << "Page Faults: " << pageFaults_    << '\n';
+    std::cout << "TLB Hits: "    << tlbHits_
+              << " / Misses: "   << tlbMisses_     << '\n';
+
+    const double avg = totalAccesses_
+        ? (totalAccessTime_ / static_cast<double>(totalAccesses_)) : 0.0;
+    const double hitRate = (tlbHits_ + tlbMisses_)
+        ? (static_cast<double>(tlbHits_) / (tlbHits_ + tlbMisses_)) : 0.0;
+    const double pfRate  = totalAccesses_
+        ? (static_cast<double>(pageFaults_) / totalAccesses_) : 0.0;
+
+    std::cout << "Avg access time (us): " << avg     << '\n';
+    std::cout << "TLB hit rate: "         << hitRate << '\n';
+    std::cout << "Page fault rate: "      << pfRate  << '\n';
+}
+
+Simulation::Stats Simulation::stats() const {
+    Stats s;
+    s.accesses        = totalAccesses_;
+    s.tlbHits         = tlbHits_;
+    s.tlbMisses       = tlbMisses_;
+    s.pageFaults      = pageFaults_;
+    s.avgAccessTimeUs = totalAccesses_
+        ? (totalAccessTime_ / static_cast<double>(totalAccesses_)) : 0.0;
+    s.tlbHitRate      = (tlbHits_ + tlbMisses_)
+        ? (static_cast<double>(tlbHits_) / (tlbHits_ + tlbMisses_)) : 0.0;
+    s.pageFaultRate   = totalAccesses_
+        ? (static_cast<double>(pageFaults_) / totalAccesses_) : 0.0;
+    return s;
 }

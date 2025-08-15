@@ -1,28 +1,29 @@
-//
-// Created by Son on 28.07.25.
-//
-
+/**
+* @file LRUAlgorithm.cpp
+ * @brief Implementation of LRU page replacement.
+ */
 #include "core/algorithms/LRUAlgorithm.h"
+#include <stdexcept>
+#include <limits>
 
 LRUAlgorithm::LRUAlgorithm() : accessCounter(0) {}
 
 void LRUAlgorithm::memoryAccess(int pageId) {
     ++accessCounter;
     auto it = table.find(pageId);
-    if (it != table.end()) {
-        it->second.lastUse = accessCounter;
-    }
+    if (it != table.end()) it->second.lastUse = accessCounter;
 }
 
 int LRUAlgorithm::selectVictimPage() {
-    long oldest = accessCounter + 1;
-    int victimFrame = 0;
-    int victimPage = -1;
-    for (auto &p : table) {
-        if (p.second.lastUse < oldest) {
-            oldest = p.second.lastUse;
-            victimFrame = p.second.frameIndex;
-            victimPage = p.first;
+    if (table.empty()) throw std::logic_error("LRU: empty table");
+    long oldest = std::numeric_limits<long>::max();
+    int victimFrame = -1;
+    int victimPage  = -1;
+    for (auto &kv : table) {
+        if (kv.second.lastUse < oldest) {
+            oldest = kv.second.lastUse;
+            victimFrame = kv.second.frameIndex;
+            victimPage = kv.first;
         }
     }
     if (victimPage != -1) table.erase(victimPage);

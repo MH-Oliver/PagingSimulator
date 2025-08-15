@@ -1,13 +1,15 @@
-// ===== Modified File: src/des/Event.cpp =====
+// src/des/Des.h
+/**
+ * @file Des.h
+ * @brief Convenience header for DES components.
+ */
+#ifndef DES_H
+#define DES_H
+
+#include <iostream>
+#include <vector>
+#include <queue>
 #include "des/Event.h"
+#include "des/EventQueue.h"
 
-Event::Event(std::function<void()> cb, double time)
-    : callback(std::move(cb)), timestamp(time) {}
-
-double Event::getTimestamp() const {
-    return timestamp;
-}
-
-void Event::processEvent() {
-    callback();
-}
+#endif // DES_H

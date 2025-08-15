@@ -1,4 +1,7 @@
-// ===== Datei: src/TraceLoader.h =====
+/**
+* @file TraceLoader.h
+ * @brief Load a trace file and schedule memory access events.
+ */
 #ifndef TRACELOADER_H
 #define TRACELOADER_H
 
@@ -7,12 +10,13 @@
 #include "Simulation.h"
 
 /**
- * Lädt ein Trace-File mit Page-IDs (eine pro Zeile) und plant MemoryAccessEvents.
- * @param filename  Pfad zur Trace-Datei (z.B. "resources/trace.txt").
- * @param eq        Referenz auf DES-EventQueue.
- * @param sim       Pointer auf Simulation-Instanz.
- * @param startTime Zeitstempel des ersten Events (in Sekunden).
- * @param delta     Zeitabstand zwischen Events (in Sekunden).
+ * @brief Load a trace of page accesses and schedule them into the event queue.
+ * @details Each line: "pageId [R|W]". Lines starting with '#' are ignored.
+ * @param filename Path to the trace file.
+ * @param eq Event queue to schedule into (takes ownership of created events).
+ * @param sim Simulation to call when events fire.
+ * @param startTime Time of first event.
+ * @param delta Time spacing between events.
  */
 void loadTrace(const std::string& filename,
                EventQueue& eq,

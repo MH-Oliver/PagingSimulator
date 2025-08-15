@@ -1,21 +1,18 @@
-//
-// Created by Son on 28.07.25.
-//
-
+/**
+* @file SecondChanceAlgorithm.cpp
+ * @brief Implementation of Second-Chance replacement.
+ */
 #include "core/algorithms/SecondChanceAlgorithm.h"
-
-SecondChanceAlgorithm::SecondChanceAlgorithm() = default;
 
 void SecondChanceAlgorithm::memoryAccess(int pageId) {
     auto it = pageMap.find(pageId);
-    if (it != pageMap.end()) {
-        it->second->referenced = true;
-    }
+    if (it != pageMap.end()) it->second->referenced = true;
 }
 
 int SecondChanceAlgorithm::selectVictimPage() {
+    if (clockList.empty()) throw std::logic_error("SecondChance: empty clock");
     while (true) {
-        Entry entry = clockList.front();
+        auto entry = clockList.front();
         clockList.pop_front();
         if (entry.referenced) {
             entry.referenced = false;
@@ -29,7 +26,7 @@ int SecondChanceAlgorithm::selectVictimPage() {
 }
 
 void SecondChanceAlgorithm::pageLoaded(int pageId, int frameIndex) {
-    Entry e{pageId, frameIndex, false};
+    Entry e{pageId, frameIndex, true}; // Newly loaded page is referenced once.
     clockList.push_back(e);
     pageMap[pageId] = std::prev(clockList.end());
 }

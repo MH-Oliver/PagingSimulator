@@ -1,16 +1,15 @@
-//
-// Created by Son on 28.07.25.
-//
-
+// src/core/algorithms/FIFOAlgorithm.cpp
+/**
+ * @file FIFOAlgorithm.cpp
+ * @brief Implementation of FIFO page replacement.
+ */
 #include "core/algorithms/FIFOAlgorithm.h"
-
-FIFOAlgorithm::FIFOAlgorithm() = default;
-
-void FIFOAlgorithm::memoryAccess(int /*pageId*/) {
-    // FIFO does not track accesses
-}
+#include <stdexcept>
 
 int FIFOAlgorithm::selectVictimPage() {
+    if (frameQueue.empty()) {
+        throw std::logic_error("FIFO: empty queue");
+    }
     int victim = frameQueue.front();
     frameQueue.pop();
     return victim;

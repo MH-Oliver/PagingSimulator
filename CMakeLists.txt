@@ -1,39 +1,46 @@
-cmake_minimum_required(VERSION 3.28)
-project(PagingSimulator)
+cmake_minimum_required(VERSION 3.22)
+project(PagingSimulator LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
-include_directories(${CMAKE_SOURCE_DIR}/src)
-add_executable(PagingSimulator
-        main.cpp
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+# Enable reasonable warnings (tighten as needed)
+if(MSVC)
+    add_compile_options(/W4 /permissive- /EHsc)
+else()
+    add_compile_options(-Wall -Wextra -Wpedantic)
+endif()
+
+# --- Core library ---
+add_library(PagingCore
         src/des/Event.cpp
         src/des/EventQueue.cpp
-        src/core/PagingAlgorithm.h
-        src/core/CoreStructs.h
         src/core/MemoryAccessEvent.cpp
-        src/core/MemoryAccessEvent.h
         src/Simulation.cpp
-        src/Simulation.h
-        test/HandleMemoryAccessTest.h
-        test/DesTest.h
-        src/core/DummyPagingAlgorithm.h
-        src/core/Algorithms/FIFOAlgorithm.cpp
-        src/core/Algorithms/FIFOAlgorithm.h
-        src/core/Algorithms/SecondChanceAlgorithm.cpp
-        src/core/Algorithms/SecondChanceAlgorithm.h
-        src/core/Algorithms/LRUAlgorithm.cpp
-        src/core/Algorithms/LRUAlgorithm.h
-        src/core/Algorithms/NRUAlgorithm.cpp
-        src/core/Algorithms/NRUAlgorithm.h
-        src/core/Algorithms/NFUAlgorithm.cpp
-        src/core/Algorithms/NFUAlgorithm.h
         src/TraceLoader.cpp
-        src/TraceLoader.h
-        src/core/Algorithms/NFUNoAgingAlgorithm.cpp
-        src/core/Algorithms/NFUNoAgingAlgorithm.h)
+        src/core/algorithms/FIFOAlgorithm.cpp
+        src/core/algorithms/LRUAlgorithm.cpp
+        src/core/algorithms/NRUAlgorithm.cpp
+        src/core/algorithms/NFUAlgorithm.cpp
+        src/core/algorithms/NFUNoAgingAlgorithm.cpp
+        src/core/algorithms/SecondChanceAlgorithm.cpp
+)
 
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources
+target_include_directories(PagingCore PUBLIC
+        ${CMAKE_CURRENT_SOURCE_DIR}/src
+)
+
+# --- CLI demo executable ---
+add_executable(PagingSimulatorCli
+        main.cpp
+        test/HandleMemoryAccessTest.h
+)
+target_link_libraries(PagingSimulatorCli PRIVATE PagingCore)
+
+# Copy sample trace after build
+add_custom_command(TARGET PagingSimulatorCli POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E make_directory $<TARGET_FILE_DIR:PagingSimulatorCli>/resources
         COMMAND ${CMAKE_COMMAND} -E copy_if_different
         ${CMAKE_SOURCE_DIR}/resources/trace.txt
-        $<TARGET_FILE_DIR:${PROJECT_NAME}>/resources/trace.txt
+        $<TARGET_FILE_DIR:PagingSimulatorCli>/resources/trace.txt
 )

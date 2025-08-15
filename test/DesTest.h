@@ -1,100 +1,71 @@
+// src/test/DesTest.h
+/**
+ * @file DesTest.h
+ * @brief Small inline test driver for the DES queue.
+ */
 #ifndef DESTEST_H
 #define DESTEST_H
+
+#include <iostream>
+#include <queue>
+#include <cstdlib> // rand, srand
+#include <ctime>   // time
 #include "des/Des.h"
 
-using namespace std;
-
-int generateRandomNumber() {
-    int randomNumber = rand() % 20 + 1;
-    return randomNumber;
+inline int generateRandomNumber() {
+    return std::rand() % 20 + 1;
 }
 
-EventQueue q;
+inline EventQueue q;
 
-queue<int> buffer;
-int bufferMax = 5;
+inline std::queue<int> buffer;
+inline int bufferMax = 5;
 
-int consumerTime = generateRandomNumber();
-int producerTime = generateRandomNumber();
-int amountProduced = 0;
-int actAmountProduced = 0;
-int maxTime = 100;
-int maxProduced = 20;
+inline int consumerTime;
+inline int producerTime;
+inline int amountProduced = 0;
+inline int actAmountProduced = 0;
+inline int maxTime = 100;
+inline int maxProduced = 20;
 
-void produce() {
-    int val = rand() % 20;
-
-    if(amountProduced > maxProduced) {
-        cout << "Max Products reached" << endl;
+inline void produce() {
+    int val = std::rand() % 20;
+    if (amountProduced > maxProduced) {
+        std::cout << "Max Products reached\n";
     } else {
         buffer.push(val);
-        cout << "Inserted val: " << val << endl;
+        std::cout << "Inserted val: " << val << "\n";
         amountProduced++;
     }
-
 }
 
-void consume() {
-    if(buffer.size() > 0) {
-        cout << "read value: " << buffer.front() << endl;
+inline void consume() {
+    if (!buffer.empty()) {
+        std::cout << "read value: " << buffer.front() << "\n";
         buffer.pop();
     } else {
-        cout << "Buffer empty" << endl;
+        std::cout << "Buffer empty\n";
     }
 }
 
-void test_1(){
-    cout << "Test 1:" << endl;
-}
-
-
-void test_2(){
-    cout << "Test 2:" << endl;
+inline void test_1(){ std::cout << "Test 1:\n"; }
+inline void test_2(){
+    std::cout << "Test 2:\n";
     Event *g = new Event(&test_1, producerTime);
     q.AddEvent(g);
 }
+inline void test_3(){ std::cout << "Test 3:\n"; }
 
-
-void test_3(){
-    cout << "Test 3:" << endl;
-}
-
+/**
+ * @brief Execute a minimal sequence to validate DES behavior.
+ */
 class DesTest {
-
 public:
     static void executeTests() {
-        cout << "--- Test vom DES ---" << endl;
-
-        srand(time(0));
-
-        /*
-        while (producerTime <= maxTime) {
-
-                if (buffer.size() < bufferMax) {
-                    Event *e = new Event(&produce, producerTime);
-                    q.AddEvent(e);
-                    actAmountProduced++;
-                }
-                else {
-                    std::cout << "buffer is full." << std::endl;
-                }
-                producerTime += generateRandomNumber();
-
-        }
-
-        while (consumerTime <= maxTime) {
-            if (buffer.size() < bufferMax) {
-                Event *e = new Event(&consume, consumerTime);
-                q.AddEvent(e);
-                actAmountProduced++;
-            }
-            else {
-                std::cout << "buffer is full." << std::endl;
-            }
-            consumerTime += generateRandomNumber();
-        }
-
-        */
+        std::cout << "--- DES quick test ---\n";
+        std::srand(static_cast<unsigned>(std::time(nullptr)));
+        producerTime = generateRandomNumber();
+        consumerTime = generateRandomNumber();
 
         Event *e = new Event(&test_1, producerTime);
         Event *f = new Event(&test_2, producerTime);
@@ -108,4 +79,4 @@ public:
     }
 };
 
-#endif //DESTEST_H
+#endif // DESTEST_H
