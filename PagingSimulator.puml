@@ -1,0 +1,116 @@
+@startuml
+
+class Simulation {
+
+  +handleMemoryAccess(event)
+
+  +handlePageFault(pageId)
+
+  +stats() : Stats
+
+  +mainMemoryView() : vector<PageFrame>&
+
+  +mmuView() : MMU&
+}
+
+class PagingAlgorithm {
+
+  {abstract} +memoryAccess(pageId)
+
+  {abstract} +selectVictimPage() : int
+
+  {abstract} +pageLoaded(pageId, frameIndex)
+
+  +onWrite(pageId)
+
+}
+
+class FIFOAlgorithm
+
+class LRUAlgorithm
+
+class NRUAlgorithm
+
+class NFUAlgorithm
+
+class NFUNoAgingAlgorithm
+
+class SecondChanceAlgorithm
+
+class MMU {
+
+  +tlb : TLB
+
+  +currentProcess : Process*
+
+  +setCurrentProcess(p)
+
+}
+
+class TLB {
+
+  +entries : deque<TLBEntry>
+
+  +addOrUpdate(p,f)
+
+  +deleteEntryByFrame(f)
+
+  +lookup(p) : int
+
+}
+
+class Process {
+    +page_table : PageTable
+}
+
+class PageTable {
+    +entries : vector<PageTableEntry>
+}
+
+class PageFrame
+
+class Event {
+    +time() : double
+    +run()
+}
+
+class EventQueue {
+    +AddEvent(e)
+    +step()
+    +run()
+ }
+
+class MemoryAccessEvent {
++pageId()
++write()
+}
+
+Simulation --> PagingAlgorithm
+
+Simulation --> MMU
+
+MMU --> TLB
+
+MMU --> Process
+
+Process --> PageTable
+
+Simulation --> EventQueue
+
+EventQueue --> Event
+
+Simulation --> MemoryAccessEvent
+
+PagingAlgorithm <|-- FIFOAlgorithm
+
+PagingAlgorithm <|-- LRUAlgorithm
+
+PagingAlgorithm <|-- NRUAlgorithm
+
+PagingAlgorithm <|-- NFUAlgorithm
+
+PagingAlgorithm <|-- NFUNoAgingAlgorithm
+
+PagingAlgorithm <|-- SecondChanceAlgorithm
+
+@enduml
