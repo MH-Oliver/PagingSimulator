@@ -170,22 +170,14 @@ void Simulation::handlePageFault(int requestedPageId, bool writeAccess) {
     // 3) map new page
     auto& frame = mainMemory_[targetFrame];
     frame.pageId        = requestedPageId;
-    frame.referencedBit = true;
-    frame.dirtyBit      = false;
+    frame.referencedBit = true;   // this access references it
+    frame.dirtyBit      = writeAccess; // set now; algorithm gets onWrite() below
 
     auto& pte = mmu_.currentProcess->page_table.entries[requestedPageId];
     pte.frameIndex = targetFrame;
     pte.isPresent  = true;
 
-    // if write access, mark dirty and notify algorithm
-    if (writeAccess) {
-        frame.dirtyBit = true;
-        pagingAlgorithm_->onWrite(requestedPageId);
-        std::ostringstream os; os << "> Schreibzugriff: Dirty-Bit von Rahmen " << targetFrame << " gesetzt.";
-        log(os.str());
-    }
-
-    // Update TLB & policy
+    // Update TLB
     mmu_.tlb.addOrUpdate(requestedPageId, targetFrame);
     {
         std::ostringstream os;
@@ -193,7 +185,21 @@ void Simulation::handlePageFault(int requestedPageId, bool writeAccess) {
            << " -> Rahmen " << targetFrame << ".";
         log(os.str());
     }
+
+    // **IMPORTANT ORDER CHANGE**
+    // First tell the algorithm that the page is loaded into 'targetFrame'
     pagingAlgorithm_->pageLoaded(requestedPageId, targetFrame);
+
+    // Then record that THIS very access referenced the page (R=1 for aging/NRU etc.)
+    pagingAlgorithm_->memoryAccess(requestedPageId);
+
+    // Finally, if this access was a write, inform the algorithm so it can mark dirty
+    if (writeAccess) {
+        pagingAlgorithm_->onWrite(requestedPageId);
+        std::ostringstream os; os << "> Schreibzugriff: Dirty-Bit von Rahmen "
+                                  << targetFrame << " gesetzt.";
+        log(os.str());
+    }
 }
 
 void Simulation::printStatistics() const {
