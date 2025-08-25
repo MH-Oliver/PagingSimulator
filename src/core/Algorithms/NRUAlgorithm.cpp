@@ -45,6 +45,11 @@ int NRUAlgorithm::selectVictimPage() {
 
     int victimFrame = table[victimPage].frameIndex;
     table.erase(victimPage);
+
+    for (auto &kv : table) {
+        kv.second.referenced = false;
+    }
+
     return victimFrame;
 }
 
