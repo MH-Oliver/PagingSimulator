@@ -4,6 +4,8 @@
  */
 
 #include "Simulation.h"
+
+#include <iostream>
 #include <sstream>
 #include <utility>
 
@@ -186,14 +188,13 @@ void Simulation::handlePageFault(int requestedPageId, bool writeAccess) {
         log(os.str());
     }
 
-    // **IMPORTANT ORDER CHANGE**
-    // First tell the algorithm that the page is loaded into 'targetFrame'
+    // To tell the algorithm that the page is loaded into 'targetFrame'
     pagingAlgorithm_->pageLoaded(requestedPageId, targetFrame);
 
-    // Then record that THIS very access referenced the page (R=1 for aging/NRU etc.)
+    // Then record that this very access referenced the page
     pagingAlgorithm_->memoryAccess(requestedPageId);
 
-    // Finally, if this access was a write, inform the algorithm so it can mark dirty
+    // If this access was a write, inform the algorithm so it can mark dirty
     if (writeAccess) {
         pagingAlgorithm_->onWrite(requestedPageId);
         std::ostringstream os; os << "> Schreibzugriff: Dirty-Bit von Rahmen "

@@ -1,23 +1,8 @@
-/**
- * @file Simulation.h
- * @brief Paging simulator with a TLB and pluggable replacement algorithms.
- *
- * The simulator models a paged memory hierarchy with:
- *  - Physical frames (@ref PageFrame)
- *  - A per-process page table inside the @ref MMU
- *  - A simple TLB inside the @ref MMU
- *  - A replacement policy (@ref PagingAlgorithm)
- *
- * It collects simple metrics: total accesses, TLB hits/misses, page faults, and
- * average access time based on a minimal timing model.
- */
-
 #ifndef SIMULATION_H
 #define SIMULATION_H
 
 #include <memory>
 #include <vector>
-#include <iostream>
 #include <functional>   ///< Logger callback
 #include <string>
 
@@ -71,15 +56,29 @@ public:
     ~Simulation() = default;
 
     /**
-     * @brief Handle a single memory access event.
-     * @param event Accessed virtual page and optional write flag.
+     * @brief Handles a single memory access event.
+     * @details
+     * Simulates the entire process of a memory access, including TLB lookup,
+     * page table lookup, and the handling of page faults.
+     *
+     * The process is as follows:
+     * 1.  **TLB Lookup**: On a hit (TLB-Hit), the frame's metadata is updated.
+     * 2.  **Page Table Lookup**: On a TLB miss, the page table is checked.
+     * 3.  **Page Fault**: If the page is not in main memory, a page fault is triggered.
+     * 4.  **Page Hit**: If the page is in main memory, the access is simulated and the TLB is updated.
+     *
+     * The method also updates the relevant counters for the simulation statistics.
+     *
+     * @param event The event containing the target data for the memory access (virtual page number and access type R/W).
      */
     void handleMemoryAccess(const MemoryAccessEvent& event);
 
     /**
-     * @brief Handle a page fault for a requested page.
-     * @param requestedPageId Virtual page to load.
-     * @param writeAccess     True if the triggering access was a write.
+     * @brief Handles a page fault by loading a page into a physical frame.
+     * @details Finds a free frame or evicts a victim page via the paging algorithm.
+     * It then loads the requested page and updates the page table and TLB.
+     * @param requestedPageId The virtual page ID that caused the fault.
+     * @param writeAccess     True if the fault was from a write operation.
      */
     void handlePageFault(int requestedPageId, bool writeAccess);
 

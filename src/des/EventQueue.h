@@ -24,31 +24,31 @@
 #include <vector>
 #include <cstddef>
 
-class Event; // forward declaration (정의는 .cpp에서 include)
+class Event;
 
 class EventQueue {
 public:
-    EventQueue();                       // 정의는 .cpp
-    ~EventQueue();                      // 정의는 .cpp  ← 중요: 소멸자를 TU로 이동
+    EventQueue();
+    ~EventQueue();
     EventQueue(const EventQueue&) = delete;
     EventQueue& operator=(const EventQueue&) = delete;
-    EventQueue(EventQueue&&) noexcept;        // 정의는 .cpp
-    EventQueue& operator=(EventQueue&&) noexcept; // 정의는 .cpp
+    EventQueue(EventQueue&&) noexcept;
+    EventQueue& operator=(EventQueue&&) noexcept;
 
     /// Add an event (takes ownership).
-    void AddEvent(Event* e);            // 정의는 .cpp
+    void AddEvent(Event* e);
     /// Execute all remaining events.
-    void run();                         // 정의는 .cpp
+    void run();
     /// Execute the next earliest event (if any).
-    void step();                        // 정의는 .cpp
+    void step();
     /// Remove all pending events without executing.
-    void clear();                       // 정의는 .cpp
+    void clear();
 
     bool empty() const { return pq_.empty(); }
     std::size_t size() const { return pq_.size(); }
 
 private:
-    /// Comparator for min-heap by event time (정의는 .cpp)
+    /// Comparator for min-heap by event time
     struct Cmp {
         bool operator()(const std::unique_ptr<Event>& a,
                         const std::unique_ptr<Event>& b) const;

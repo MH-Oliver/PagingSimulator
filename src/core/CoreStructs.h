@@ -1,4 +1,3 @@
-// src/core/CoreStructs.h
 /**
  * @file CoreStructs.h
  * @brief Core data structures for frames, TLB, processes, and MMU.
@@ -8,7 +7,6 @@
 
 #include <vector>
 #include <deque>
-#include <cstdint>
 
 /** @brief One physical memory frame. */
 struct PageFrame {

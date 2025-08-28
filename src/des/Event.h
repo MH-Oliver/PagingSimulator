@@ -1,4 +1,3 @@
-// src/des/Event.h
 /**
  * @file Event.h
  * @brief Discrete event with a scheduled time and callable action.

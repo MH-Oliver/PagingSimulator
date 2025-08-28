@@ -13,9 +13,7 @@ endif()
 
 # --- Core library ---
 add_library(PagingCore
-        src/des/Event.cpp
         src/des/EventQueue.cpp
-        src/core/MemoryAccessEvent.cpp
         src/Simulation.cpp
         src/TraceLoader.cpp
         src/core/algorithms/FIFOAlgorithm.cpp

@@ -24,8 +24,6 @@ public:
   int  pageId()  const { return pageId_; }
   /** @return True if this is a write access. */
   bool write()   const { return write_; }
-  /** @return True if this is a write access (compat accessor). */
-  bool isWrite() const { return write_; }
 };
 
 #endif // MEMORYACCESSEVENT_H

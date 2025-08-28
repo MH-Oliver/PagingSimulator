@@ -1,4 +1,7 @@
-// src/des/Des.h
+/**
+* @file Des.h
+ * @brief Convenience header for DES components.
+ */
 #ifndef DES_H
 #define DES_H
 
